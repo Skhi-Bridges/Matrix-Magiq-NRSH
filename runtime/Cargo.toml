@@ -1,0 +1,30 @@
+[package]
+name = "nourish-runtime"
+version = "0.1.0"
+authors = ["Matrix-Magiq Team"]
+edition = "2021"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = ["derive"] }
+scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
+frame-system = { workspace = true }
+frame-support = { workspace = true }
+pallet-balances = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+nourish-pallet = { path = "../pallets/nrsh", default-features = false }
+nourish-telemetry = { path = "../telemetry", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+    "codec/std",
+    "scale-info/std",
+    "frame-system/std",
+    "frame-support/std",
+    "pallet-balances/std",
+    "sp-core/std",
+    "sp-runtime/std",
+    "nourish-pallet/std",
+    "nourish-telemetry/std",
+]

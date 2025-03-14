@@ -1,0 +1,22 @@
+[package]
+name = "nrsh-node"
+version = "0.1.0"
+authors = ["Matrix-Magiq Team"]
+edition = "2021"
+build = "build.rs"
+
+[dependencies]
+clap = { version = "4.0.9", features = ["derive"] }
+futures = "0.3.21"
+log = "0.4.17"
+nourish-runtime = { path = "../runtime" }
+sc-cli = { version = "0.10.0-dev" }
+sc-executor = { version = "0.10.0-dev" }
+sc-network = { version = "0.10.0-dev" }
+sc-service = { version = "0.10.0-dev" }
+sc-telemetry = { version = "4.0.0-dev" }
+sp-core = { version = "7.0.0" }
+sp-runtime = { version = "7.0.0" }
+
+[build-dependencies]
+substrate-build-script-utils = { version = "3.0.0" }

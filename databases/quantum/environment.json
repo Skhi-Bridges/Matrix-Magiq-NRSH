@@ -1,0 +1,19 @@
+﻿{
+    "project_root": "C:\\Users\\skhib\\WindSurf",
+    "db_modules": {
+        "enabled": [
+            "quantum_db",
+            "extended_quantum_db",
+            "vector_stores",
+            "key_value"
+        ]
+    },
+    "ao_processes": {
+        "tuning_interval": 300,
+        "metrics_interval": 60
+    },
+    "lightning": {
+        "enabled": false,
+        "compute_type": "cpu"
+    }
+}

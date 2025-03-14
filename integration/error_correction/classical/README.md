@@ -1,0 +1,1 @@
+# Classical Error Correction\n\nImplements robust error handling, retry mechanisms, and recovery patterns for traditional computing operations.\n\n## Implementation\n- Reed-Solomon codes\n- Retry mechanisms\n- Recovery patterns

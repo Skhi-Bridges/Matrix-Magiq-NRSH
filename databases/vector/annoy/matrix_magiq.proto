@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package matrix_magiq;
+
+service QuantumRuntime {
+    // Quantum Circuit Operations
+    rpc ExecuteCircuit (QuantumCircuit) returns (ExecutionResult);
+    rpc MeasureState (MeasurementRequest) returns (MeasurementResult);
+    
+    // Database Integration
+    rpc StoreQuantumState (QuantumState) returns (StorageResult);
+    rpc RetrieveQuantumState (StateRequest) returns (QuantumState);
+    
+    // Zero Trust Operations
+    rpc VerifyIdentity (IdentityContext) returns (VerificationResult);
+    rpc AuthenticateSession (AuthRequest) returns (stream AuthStatus);
+}
+
+message QuantumCircuit {
+    repeated Operation operations = 1;
+    map<string, bytes> parameters = 2;
+    bool error_correction = 3;
+    string circuit_id = 4;
+}
+
+message Operation {
+    string type = 1;
+    repeated uint32 qubits = 2;
+    repeated double parameters = 3;
+    bytes custom_data = 4;
+}
+
+message QuantumState {
+    bytes state_vector = 1;
+    repeated double amplitudes = 2;
+    map<string, double> observables = 3;
+    uint64 timestamp = 4;
+    string state_id = 5;
+}
+
+message ExecutionResult {
+    string circuit_id = 1;
+    QuantumState final_state = 2;
+    repeated double measurements = 3;
+    ErrorInfo error = 4;
+}
+
+message MeasurementRequest {
+    string state_id = 1;
+    repeated uint32 qubits = 2;
+    string basis = 3;
+}
+
+message MeasurementResult {
+    repeated bool outcomes = 1;
+    repeated double probabilities = 2;
+    ErrorInfo error = 3;
+}
+
+message StateRequest {
+    string state_id = 1;
+    string db_type = 2;  // "annoy", "faiss", "sqlite", etc.
+}
+
+message StorageResult {
+    string state_id = 1;
+    bool success = 2;
+    string storage_location = 3;
+    ErrorInfo error = 4;
+}
+
+message IdentityContext {
+    string user_id = 1;
+    repeated string auth_factors = 2;
+    bytes signature = 3;
+    map<string, string> metadata = 4;
+}
+
+message AuthRequest {
+    string session_id = 1;
+    IdentityContext identity = 2;
+    repeated string requested_permissions = 3;
+}
+
+message AuthStatus {
+    string session_id = 1;
+    bool authenticated = 2;
+    repeated string granted_permissions = 3;
+    uint64 expiration = 4;
+    ErrorInfo error = 5;
+}
+
+message VerificationResult {
+    bool verified = 1;
+    repeated string trust_factors = 2;
+    uint64 verification_timestamp = 3;
+    ErrorInfo error = 4;
+}
+
+message ErrorInfo {
+    string code = 1;
+    string message = 2;
+    string details = 3;
+}

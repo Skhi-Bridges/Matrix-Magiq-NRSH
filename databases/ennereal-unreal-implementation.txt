@@ -1,0 +1,51 @@
+// EnnerealComputingSystem.h
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "Math/Vector.h"
+#include "Containers/Array.h"
+#include "Containers/Map.h"
+#include "EnnerealComputingSystem.generated.h"
+
+/**
+ * Qudit state representation (4-state system)
+ */
+UENUM(BlueprintType)
+enum class EQuditState : uint8
+{
+    Zero = 0,
+    One = 1,
+    Two = 2,
+    Three = 3
+};
+
+/**
+ * Dimensional axis identifiers
+ */
+UENUM(BlueprintType)
+enum class EDimensionalAxis : uint8
+{
+    X = 0,
+    Y = 1,
+    Z = 2,
+    T = 3, // Temporal
+    Theta1 = 4,
+    Theta2 = 5,
+    Theta3 = 6,
+    Theta4 = 7,
+    Theta5 = 8
+};
+
+/**
+ * Structure representing a position in 9-dimensional space
+ */
+USTRUCT(BlueprintType)
+struct FDimensionalCoordinate
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ennereal")
+    TMap<EDimensionalAxis, float> Coordinates;
+
+    // Initialize

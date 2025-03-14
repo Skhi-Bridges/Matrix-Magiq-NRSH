@@ -1,0 +1,24 @@
+[package]
+name = "networking"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Async Runtime & Networking
+tokio = { version = "1.28", features = ["rt", "sync", "net"] }
+hyper = { version = "0.14", default-features = false, features = ["http1", "server"] }
+tower = "0.4"
+axum = "0.6"
+
+# Error Handling
+thiserror = "1.0"
+anyhow = "1.0"
+tracing = "0.1"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Local Dependencies
+quantum = { path = "../quantum" }
+security = { path = "../security" }

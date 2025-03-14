@@ -1,0 +1,1 @@
+# Quantum Error Correction (QEC)\n\nImplements quantum error correction codes to protect quantum states from decoherence and operational errors.\n\n## Implementation\n- Surface codes\n- Quantum error detection\n- Quantum state protection

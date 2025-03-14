@@ -1,0 +1,24 @@
+[package]
+name = "nourish-pallet"
+version = "0.1.0"
+authors = ["Matrix-Magiq Team"]
+edition = "2021"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = ["derive"] }
+scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
+frame-system = { workspace = true }
+frame-support = { workspace = true }
+sp-runtime = { workspace = true }
+sp-core = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+    "codec/std",
+    "scale-info/std",
+    "frame-system/std",
+    "frame-support/std",
+    "sp-runtime/std",
+    "sp-core/std",
+]

@@ -1,0 +1,23 @@
+[package]
+name = "nourish-telemetry"
+version = "0.1.0"
+authors = ["Matrix-Magiq Team"]
+edition = "2021"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = ["derive"] }
+log = { version = "0.4.17", default-features = false }
+frame-system = { workspace = true }
+frame-support = { workspace = true }
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+default = ["std"]
+std = [
+    "codec/std",
+    "log/std",
+    "frame-system/std",
+    "frame-support/std",
+]

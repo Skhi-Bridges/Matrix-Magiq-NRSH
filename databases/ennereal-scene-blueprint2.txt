@@ -1,0 +1,816 @@
+// EnnerealExhibitionHall.h
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/PointLightComponent.h"
+#include "Components/SpotLightComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "EnnerealExhibitionHall.generated.h"
+
+UCLASS()
+class ENNEREALEXPERIENCE_API AEnnerealExhibitionHall : public AActor
+{
+    GENERATED_BODY()
+    
+public:    
+    AEnnerealExhibitionHall();
+
+protected:
+    virtual void BeginPlay() override;
+
+public:    
+    virtual void Tick(float DeltaTime) override;
+
+    // Main room components
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Exhibition Hall")
+    USceneComponent* RootScene;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Exhibition Hall")
+    UStaticMeshComponent* FloorMesh;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Exhibition Hall")
+    UStaticMeshComponent* CeilingMesh;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Exhibition Hall")
+    TArray<UStaticMeshComponent*> WallMeshes;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Exhibition Hall")
+    TArray<UStaticMeshComponent*> PillarMeshes;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Exhibition Hall")
+    TArray<UStaticMeshComponent*> DraperyMeshes;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Exhibition Hall")
+    TArray<UStaticMeshComponent*> RugMeshes;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Exhibition Hall")
+    TArray<UStaticMeshComponent*> ChairMeshes;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Exhibition Hall")
+    TArray<UStaticMeshComponent*> StatueMeshes;
+    
+    // Dragon guardian
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Exhibition Hall")
+    UStaticMeshComponent* DragonMesh;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Exhibition Hall")
+    UParticleSystemComponent* DragonBreathEffect;
+    
+    // Ennereal computer components
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ennereal Computer")
+    UStaticMeshComponent* ComputerBaseMesh;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ennereal Computer")
+    UStaticMeshComponent* ComputerCoreMesh;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ennereal Computer")
+    TArray<UStaticMeshComponent*> QuditModules;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ennereal Computer")
+    UParticleSystemComponent* DimensionalEffects;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ennereal Computer")
+    TArray<USpotLightComponent*> ComputerLights;
+    
+    // Materials
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
+    UMaterialInterface* MarbleMaterial;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
+    UMaterialInterface* GoldMaterial;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
+    UMaterialInterface* VelvetMaterial;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
+    UMaterialInterface* SilkMaterial;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
+    UMaterialInterface* DragonMaterial;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
+    UMaterialInterface* ComputerCoreMaterial;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
+    UMaterialInterface* HolographicMaterial;
+    
+    // Dynamic properties
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ennereal Computer")
+    float CoreRotationSpeed;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ennereal Computer")
+    float QuditPulsationFrequency;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ennereal Computer")
+    float DimensionalEffectIntensity;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Exhibition Hall")
+    float RoomWidth;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Exhibition Hall")
+    float RoomLength;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Exhibition Hall")
+    float RoomHeight;
+    
+    // Spatial.io integration
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spatial Integration")
+    FString SpatialRoomID;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spatial Integration")
+    bool bEnableSpatialVisitors;
+    
+    // Methods
+    UFUNCTION(BlueprintCallable, Category = "Ennereal Computer")
+    void ActivateComputer();
+    
+    UFUNCTION(BlueprintCallable, Category = "Ennereal Computer")
+    void DeactivateComputer();
+    
+    UFUNCTION(BlueprintCallable, Category = "Ennereal Computer")
+    void ToggleDimensionalVisuals(bool bEnable);
+    
+    UFUNCTION(BlueprintCallable, Category = "Spatial Integration")
+    void ConnectToSpatialRoom(const FString& RoomID);
+    
+    UFUNCTION(BlueprintCallable, Category = "Spatial Integration")
+    void HostSpatialEvent(const FString& EventName, const FString& EventDescription);
+    
+private:
+    void SetupRoom();
+    void SetupComputer();
+    void SetupDragon();
+    void SetupLighting();
+    void AnimateComputer(float DeltaTime);
+    
+    UMaterialInstanceDynamic* ComputerCoreMID;
+    UMaterialInstanceDynamic* HolographicMID;
+    float TimeElapsed;
+};
+
+// EnnerealExhibitionHall.cpp
+#include "EnnerealExhibitionHall.h"
+
+AEnnerealExhibitionHall::AEnnerealExhibitionHall()
+{
+    PrimaryActorTick.bCanEverTick = true;
+    
+    // Create root component
+    RootScene = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
+    SetRootComponent(RootScene);
+    
+    // Create floor
+    FloorMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FloorMesh"));
+    FloorMesh->SetupAttachment(RootScene);
+    
+    // Create ceiling
+    CeilingMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CeilingMesh"));
+    CeilingMesh->SetupAttachment(RootScene);
+    
+    // Create computer base
+    ComputerBaseMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ComputerBaseMesh"));
+    ComputerBaseMesh->SetupAttachment(RootScene);
+    
+    // Create computer core
+    ComputerCoreMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ComputerCoreMesh"));
+    ComputerCoreMesh->SetupAttachment(ComputerBaseMesh);
+    
+    // Create dimensional effects
+    DimensionalEffects = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("DimensionalEffects"));
+    DimensionalEffects->SetupAttachment(ComputerCoreMesh);
+    
+    // Create dragon mesh
+    DragonMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DragonMesh"));
+    DragonMesh->SetupAttachment(RootScene);
+    
+    // Create dragon breath effect
+    DragonBreathEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("DragonBreathEffect"));
+    DragonBreathEffect->SetupAttachment(DragonMesh);
+    
+    // Default values
+    RoomWidth = 2000.0f;
+    RoomLength = 3000.0f;
+    RoomHeight = 600.0f;
+    CoreRotationSpeed = 10.0f;
+    QuditPulsationFrequency = 0.5f;
+    DimensionalEffectIntensity = 1.0f;
+    TimeElapsed = 0.0f;
+}
+
+void AEnnerealExhibitionHall::BeginPlay()
+{
+    Super::BeginPlay();
+    
+    SetupRoom();
+    SetupComputer();
+    SetupDragon();
+    SetupLighting();
+    
+    // Initialize dynamic materials
+    if (ComputerCoreMesh && ComputerCoreMaterial)
+    {
+        ComputerCoreMID = ComputerCoreMesh->CreateAndSetMaterialInstanceDynamic(0);
+    }
+    
+    if (DimensionalEffects && HolographicMaterial)
+    {
+        HolographicMID = UMaterialInstanceDynamic::Create(HolographicMaterial, this);
+        DimensionalEffects->SetMaterial(0, HolographicMID);
+    }
+    
+    // Activate the computer by default
+    ActivateComputer();
+}
+
+void AEnnerealExhibitionHall::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+    
+    TimeElapsed += DeltaTime;
+    AnimateComputer(DeltaTime);
+}
+
+void AEnnerealExhibitionHall::SetupRoom()
+{
+    // Setup floor with marble material
+    if (FloorMesh && MarbleMaterial)
+    {
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> PlaneMeshObj(TEXT("/Engine/BasicShapes/Plane"));
+        if (PlaneMeshObj.Succeeded())
+        {
+            FloorMesh->SetStaticMesh(PlaneMeshObj.Object);
+            FloorMesh->SetMaterial(0, MarbleMaterial);
+            FloorMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
+            FloorMesh->SetRelativeScale3D(FVector(RoomWidth/100.0f, RoomLength/100.0f, 1.0f));
+        }
+    }
+    
+    // Setup ceiling
+    if (CeilingMesh && MarbleMaterial)
+    {
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> PlaneMeshObj(TEXT("/Engine/BasicShapes/Plane"));
+        if (PlaneMeshObj.Succeeded())
+        {
+            CeilingMesh->SetStaticMesh(PlaneMeshObj.Object);
+            CeilingMesh->SetMaterial(0, MarbleMaterial);
+            CeilingMesh->SetRelativeLocation(FVector(0.0f, 0.0f, RoomHeight));
+            CeilingMesh->SetRelativeRotation(FRotator(180.0f, 0.0f, 0.0f));
+            CeilingMesh->SetRelativeScale3D(FVector(RoomWidth/100.0f, RoomLength/100.0f, 1.0f));
+        }
+    }
+    
+    // Setup walls
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshObj(TEXT("/Engine/BasicShapes/Cube"));
+    if (CubeMeshObj.Succeeded() && MarbleMaterial)
+    {
+        // North wall
+        UStaticMeshComponent* NorthWall = NewObject<UStaticMeshComponent>(this, TEXT("NorthWall"));
+        NorthWall->SetupAttachment(RootScene);
+        NorthWall->RegisterComponent();
+        NorthWall->SetStaticMesh(CubeMeshObj.Object);
+        NorthWall->SetMaterial(0, MarbleMaterial);
+        NorthWall->SetRelativeLocation(FVector(0.0f, RoomLength/2.0f, RoomHeight/2.0f));
+        NorthWall->SetRelativeScale3D(FVector(RoomWidth/50.0f, 1.0f, RoomHeight/50.0f));
+        WallMeshes.Add(NorthWall);
+        
+        // South wall
+        UStaticMeshComponent* SouthWall = NewObject<UStaticMeshComponent>(this, TEXT("SouthWall"));
+        SouthWall->SetupAttachment(RootScene);
+        SouthWall->RegisterComponent();
+        SouthWall->SetStaticMesh(CubeMeshObj.Object);
+        SouthWall->SetMaterial(0, MarbleMaterial);
+        SouthWall->SetRelativeLocation(FVector(0.0f, -RoomLength/2.0f, RoomHeight/2.0f));
+        SouthWall->SetRelativeScale3D(FVector(RoomWidth/50.0f, 1.0f, RoomHeight/50.0f));
+        WallMeshes.Add(SouthWall);
+        
+        // East wall
+        UStaticMeshComponent* EastWall = NewObject<UStaticMeshComponent>(this, TEXT("EastWall"));
+        EastWall->SetupAttachment(RootScene);
+        EastWall->RegisterComponent();
+        EastWall->SetStaticMesh(CubeMeshObj.Object);
+        EastWall->SetMaterial(0, MarbleMaterial);
+        EastWall->SetRelativeLocation(FVector(RoomWidth/2.0f, 0.0f, RoomHeight/2.0f));
+        EastWall->SetRelativeScale3D(FVector(1.0f, RoomLength/50.0f, RoomHeight/50.0f));
+        WallMeshes.Add(EastWall);
+        
+        // West wall
+        UStaticMeshComponent* WestWall = NewObject<UStaticMeshComponent>(this, TEXT("WestWall"));
+        WestWall->SetupAttachment(RootScene);
+        WestWall->RegisterComponent();
+        WestWall->SetStaticMesh(CubeMeshObj.Object);
+        WestWall->SetMaterial(0, MarbleMaterial);
+        WestWall->SetRelativeLocation(FVector(-RoomWidth/2.0f, 0.0f, RoomHeight/2.0f));
+        WestWall->SetRelativeScale3D(FVector(1.0f, RoomLength/50.0f, RoomHeight/50.0f));
+        WallMeshes.Add(WestWall);
+    }
+    
+    // Setup draperies
+    if (SilkMaterial)
+    {
+        // Create draperies for each wall
+        for (int i = 0; i < 8; i++)
+        {
+            UStaticMeshComponent* Drapery = NewObject<UStaticMeshComponent>(this, *FString::Printf(TEXT("Drapery_%d"), i));
+            Drapery->SetupAttachment(RootScene);
+            Drapery->RegisterComponent();
+            
+            // Use a plane mesh for the drapery
+            static ConstructorHelpers::FObjectFinder<UStaticMesh> PlaneMeshObj(TEXT("/Engine/BasicShapes/Plane"));
+            if (PlaneMeshObj.Succeeded())
+            {
+                Drapery->SetStaticMesh(PlaneMeshObj.Object);
+                Drapery->SetMaterial(0, SilkMaterial);
+                
+                // Position around the room walls
+                float angle = (float)i * PI / 4.0f;
+                float wallOffset = 10.0f; // Slight offset from the wall
+                float xPos = (RoomWidth/2.0f - wallOffset) * FMath::Cos(angle);
+                float yPos = (RoomLength/2.0f - wallOffset) * FMath::Sin(angle);
+                
+                Drapery->SetRelativeLocation(FVector(xPos, yPos, RoomHeight/2.0f));
+                Drapery->SetRelativeRotation(FRotator(0.0f, 90.0f + angle * 180.0f / PI, 0.0f));
+                Drapery->SetRelativeScale3D(FVector(5.0f, 18.0f, 1.0f)); // 18-foot long draperies
+                
+                DraperyMeshes.Add(Drapery);
+            }
+        }
+    }
+    
+    // Setup oriental rugs
+    if (VelvetMaterial)
+    {
+        // Create three ornate rugs
+        for (int i = 0; i < 3; i++)
+        {
+            UStaticMeshComponent* Rug = NewObject<UStaticMeshComponent>(this, *FString::Printf(TEXT("Rug_%d"), i));
+            Rug->SetupAttachment(RootScene);
+            Rug->RegisterComponent();
+            
+            // Use a plane mesh for the rug
+            static ConstructorHelpers::FObjectFinder<UStaticMesh> PlaneMeshObj(TEXT("/Engine/BasicShapes/Plane"));
+            if (PlaneMeshObj.Succeeded())
+            {
+                Rug->SetStaticMesh(PlaneMeshObj.Object);
+                Rug->SetMaterial(0, VelvetMaterial);
+                
+                // Position the rugs around the room
+                float yPos = (i - 1) * RoomLength/4.0f;
+                
+                Rug->SetRelativeLocation(FVector(0.0f, yPos, 2.0f)); // Slightly above floor
+                Rug->SetRelativeScale3D(FVector(6.0f, 10.0f, 1.0f));
+                
+                RugMeshes.Add(Rug);
+            }
+        }
+    }
+    
+    // Setup velvet chairs
+    if (VelvetMaterial)
+    {
+        // Create 12 overstuffed chairs around the room
+        for (int i = 0; i < 12; i++)
+        {
+            UStaticMeshComponent* Chair = NewObject<UStaticMeshComponent>(this, *FString::Printf(TEXT("Chair_%d"), i));
+            Chair->SetupAttachment(RootScene);
+            Chair->RegisterComponent();
+            
+            // Use a cube mesh for simplicity (would be replaced with proper chair mesh)
+            static ConstructorHelpers::FObjectFinder<UStaticMesh> ChairMeshObj(TEXT("/Engine/BasicShapes/Cube"));
+            if (ChairMeshObj.Succeeded())
+            {
+                Chair->SetStaticMesh(ChairMeshObj.Object);
+                Chair->SetMaterial(0, VelvetMaterial);
+                
+                // Position in a circle around the room
+                float angle = (float)i * 2.0f * PI / 12.0f;
+                float radius = FMath::Min(RoomWidth, RoomLength) * 0.3f;
+                float xPos = radius * FMath::Cos(angle);
+                float yPos = radius * FMath::Sin(angle);
+                
+                Chair->SetRelativeLocation(FVector(xPos, yPos, 25.0f));
+                Chair->SetRelativeRotation(FRotator(0.0f, angle * 180.0f / PI + 180.0f, 0.0f));
+                Chair->SetRelativeScale3D(FVector(0.7f, 1.0f, 0.7f));
+                
+                ChairMeshes.Add(Chair);
+            }
+        }
+    }
+    
+    // Setup gold statues
+    if (GoldMaterial)
+    {
+        // Create 8 statues around the room
+        for (int i = 0; i < 8; i++)
+        {
+            UStaticMeshComponent* Statue = NewObject<UStaticMeshComponent>(this, *FString::Printf(TEXT("Statue_%d"), i));
+            Statue->SetupAttachment(RootScene);
+            Statue->RegisterComponent();
+            
+            // Use a cylinder mesh for simplicity (would be replaced with proper statue mesh)
+            static ConstructorHelpers::FObjectFinder<UStaticMesh> StatueMeshObj(TEXT("/Engine/BasicShapes/Cylinder"));
+            if (StatueMeshObj.Succeeded())
+            {
+                Statue->SetStaticMesh(StatueMeshObj.Object);
+                Statue->SetMaterial(0, GoldMaterial);
+                
+                // Position along the walls
+                float angle = (float)i * PI / 4.0f;
+                float radius = FMath::Min(RoomWidth, RoomLength) * 0.4f;
+                float xPos = radius * FMath::Cos(angle);
+                float yPos = radius * FMath::Sin(angle);
+                
+                Statue->SetRelativeLocation(FVector(xPos, yPos, 100.0f));
+                Statue->SetRelativeScale3D(FVector(0.5f, 0.5f, 2.0f));
+                
+                StatueMeshes.Add(Statue);
+            }
+        }
+    }
+}
+
+void AEnnerealExhibitionHall::SetupComputer()
+{
+    // Setup computer base
+    if (ComputerBaseMesh && MarbleMaterial)
+    {
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMeshObj(TEXT("/Engine/BasicShapes/Cylinder"));
+        if (CylinderMeshObj.Succeeded())
+        {
+            ComputerBaseMesh->SetStaticMesh(CylinderMeshObj.Object);
+            ComputerBaseMesh->SetMaterial(0, MarbleMaterial);
+            ComputerBaseMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 100.0f));
+            ComputerBaseMesh->SetRelativeScale3D(FVector(3.0f, 3.0f, 0.5f));
+        }
+    }
+    
+    // Setup computer core
+    if (ComputerCoreMesh && ComputerCoreMaterial)
+    {
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMeshObj(TEXT("/Engine/BasicShapes/Sphere"));
+        if (SphereMeshObj.Succeeded())
+        {
+            ComputerCoreMesh->SetStaticMesh(SphereMeshObj.Object);
+            ComputerCoreMesh->SetMaterial(0, ComputerCoreMaterial);
+            ComputerCoreMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 150.0f));
+            ComputerCoreMesh->SetRelativeScale3D(FVector(1.5f, 1.5f, 1.5f));
+        }
+    }
+    
+    // Setup 9 qudit modules around the core
+    if (ComputerCoreMaterial)
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            UStaticMeshComponent* QuditModule = NewObject<UStaticMeshComponent>(this, *FString::Printf(TEXT("QuditModule_%d"), i));
+            QuditModule->SetupAttachment(ComputerCoreMesh);
+            QuditModule->RegisterComponent();
+            
+            static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMeshObj(TEXT("/Engine/BasicShapes/Sphere"));
+            if (SphereMeshObj.Succeeded())
+            {
+                QuditModule->SetStaticMesh(SphereMeshObj.Object);
+                QuditModule->SetMaterial(0, ComputerCoreMaterial);
+                
+                // Position in a constellation around the core
+                // First 3 in XY plane, next 3 in YZ plane, last 3 in XZ plane
+                float angle = (float)i * 2.0f * PI / 3.0f;
+                float radius = 150.0f;
+                
+                FVector Position;
+                if (i < 3)
+                {
+                    Position = FVector(radius * FMath::Cos(angle), radius * FMath::Sin(angle), 0.0f);
+                }
+                else if (i < 6)
+                {
+                    Position = FVector(0.0f, radius * FMath::Cos(angle), radius * FMath::Sin(angle));
+                }
+                else
+                {
+                    Position = FVector(radius * FMath::Cos(angle), 0.0f, radius * FMath::Sin(angle));
+                }
+                
+                QuditModule->SetRelativeLocation(Position);
+                QuditModule->SetRelativeScale3D(FVector(0.4f, 0.4f, 0.4f));
+                
+                QuditModules.Add(QuditModule);
+            }
+        }
+    }
+    
+    // Setup dimensional effects
+    if (DimensionalEffects && HolographicMaterial)
+    {
+        static ConstructorHelpers::FObjectFinder<UParticleSystem> ParticleSystemObj(TEXT("/Game/Effects/P_DimensionalRift"));
+        if (ParticleSystemObj.Succeeded())
+        {
+            DimensionalEffects->SetTemplate(ParticleSystemObj.Object);
+        }
+        DimensionalEffects->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
+        DimensionalEffects->SetMaterial(0, HolographicMaterial);
+    }
+    
+    // Setup computer lights
+    for (int i = 0; i < 4; i++)
+    {
+        USpotLightComponent* SpotLight = NewObject<USpotLightComponent>(this, *FString::Printf(TEXT("ComputerLight_%d"), i));
+        SpotLight->SetupAttachment(RootScene);
+        SpotLight->RegisterComponent();
+        
+        float angle = (float)i * PI / 2.0f;
+        float radius = 300.0f;
+        float height = 400.0f;
+        
+        SpotLight->SetRelativeLocation(FVector(radius * FMath::Cos(angle), radius * FMath::Sin(angle), height));
+        SpotLight->SetRelativeRotation(FRotator(-60.0f, angle * 180.0f / PI + 180.0f, 0.0f));
+        SpotLight->SetLightColor(FLinearColor(0.1f, 0.5f, 1.0f));
+        SpotLight->SetIntensity(8000.0f);
+        SpotLight->SetOuterConeAngle(40.0f);
+        
+        ComputerLights.Add(SpotLight);
+    }
+}
+
+void AEnnerealExhibitionHall::SetupDragon()
+{
+    // Setup dragon mesh
+    if (DragonMesh && DragonMaterial)
+    {
+        static ConstructorHelpers::FObjectFinder<UStaticMesh> DragonMeshObj(TEXT("/Game/Meshes/SM_BlackDragon"));
+        if (DragonMeshObj.Succeeded())
+        {
+            DragonMesh->SetStaticMesh(DragonMeshObj.Object);
+            DragonMesh->SetMaterial(0, DragonMaterial);
+            DragonMesh->SetRelativeLocation(FVector(-RoomWidth/4.0f, -RoomLength/3.0f, 50.0f));
+            DragonMesh->SetRelativeRotation(FRotator(0.0f, 45.0f, 0.0f));
+            DragonMesh->SetRelativeScale3D(FVector(3.0f, 3.0f, 3.0f));
+        }
+    }
+    
+    // Setup dragon breath effect
+    if (DragonBreathEffect)
+    {
+        static ConstructorHelpers::FObjectFinder<UParticleSystem> ParticleSystemObj(TEXT("/Game/Effects/P_DragonBreath"));
+        if (ParticleSystemObj.Succeeded())
+        {
+            DragonBreathEffect->SetTemplate(ParticleSystemObj.Object);
+        }
+        DragonBreathEffect->SetRelativeLocation(FVector(200.0f, 0.0f, 100.0f));
+        DragonBreathEffect->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
+    }
+}
+
+void AEnnerealExhibitionHall::SetupLighting()
+{
+    // Create ambient light
+    UPointLightComponent* AmbientLight = NewObject<UPointLightComponent>(this, TEXT("AmbientLight"));
+    AmbientLight->SetupAttachment(RootScene);
+    AmbientLight->RegisterComponent();
+    AmbientLight->SetRelativeLocation(FVector(0.0f, 0.0f, RoomHeight*0.8f));
+    AmbientLight->SetLightColor(FLinearColor(1.0f, 0.95f, 0.8f));
+    AmbientLight->SetIntensity(10000.0f);
+    AmbientLight->SetAttenuationRadius(2000.0f);
+    
+    // Create accent lights for dramatic effect
+    for (int i = 0; i < 4; i++)
+    {
+        UPointLightComponent* AccentLight = NewObject<UPointLightComponent>(this, *FString::Printf(TEXT("AccentLight_%d"), i));
+        AccentLight->SetupAttachment(RootScene);
+        AccentLight->RegisterComponent();
+        
+        float angle = (float)i * PI / 2.0f;
+        float radius = FMath::Min(RoomWidth, RoomLength) * 0.4f;
+        
+        AccentLight->SetRelativeLocation(FVector(radius * FMath::Cos(angle), radius * FMath::Sin(angle), RoomHeight*0.7f));
+        AccentLight->SetLightColor(FLinearColor(0.8f, 0.8f, 1.0f));
+        AccentLight->SetIntensity(5000.0f);
+        AccentLight->SetAttenuationRadius(1000.0f);
+    }
+    
+    // Create spotlight for the dragon
+    USpotLightComponent* DragonLight = NewObject<USpotLightComponent>(this, TEXT("DragonLight"));
+    DragonLight->SetupAttachment(RootScene);
+    DragonLight->RegisterComponent();
+    DragonLight->SetRelativeLocation(FVector(-RoomWidth/4.0f, -RoomLength/3.0f, RoomHeight*0.9f));
+    DragonLight->SetRelativeRotation(FRotator(-60.0f, 45.0f, 0.0f));
+    DragonLight->SetLightColor(FLinearColor(0.8f, 0.2f, 0.2f));
+    DragonLight->SetIntensity(8000.0f);
+    DragonLight->SetOuterConeAngle(30.0f);
+}
+
+void AEnnerealExhibitionHall::AnimateComputer(float DeltaTime)
+{
+    // Rotate the computer core
+    if (ComputerCoreMesh)
+    {
+        FRotator NewRotation = ComputerCoreMesh->GetRelativeRotation();
+        NewRotation.Yaw += CoreRotationSpeed * DeltaTime;
+        NewRotation.Roll += CoreRotationSpeed * 0.5f * DeltaTime;
+        ComputerCoreMesh->SetRelativeRotation(NewRotation);
+    }
+    
+    // Pulsate the qudit modules
+    for (int i = 0; i < QuditModules.Num(); i++)
+    {
+        if (QuditModules[i])
+        {
+            // Create a pulsating effect with different phases for each module
+            float Phase = (float)i / QuditModules.Num() * 2.0f * PI;
+            float PulseFactor = 0.2f * FMath::Sin(TimeElapsed * QuditPulsationFrequency * 2.0f * PI + Phase) + 1.0f;
+            
+            QuditModules[i]->SetRelativeScale3D(FVector(0.4f, 0.4f, 0.4f) * PulseFactor);
+            
+            // Also make the modules orbit around the core
+            FVector OriginalPosition = QuditModules[i]->GetRelativeLocation();
+            float OrbitSpeed = (i % 3 + 1) * 0.2f; // Different speeds for different modules
+            
+            FVector NewPosition;
+            if (i < 3)
+            {
+                float Angle = FMath::Atan2(OriginalPosition.Y, OriginalPosition.X) + OrbitSpeed * DeltaTime;
+                float Radius = OriginalPosition.Size2D();
+                NewPosition = FVector(Radius * FMath::Cos(Angle), Radius * FMath::Sin(Angle), OriginalPosition.Z);
+            }
+            else if (i < 6)
+            {
+                float Angle = FMath::Atan2(OriginalPosition.Z, OriginalPosition.Y) + OrbitSpeed * DeltaTime;
+                float Radius = FMath::Sqrt(FMath::Square(OriginalPosition.Y) + FMath::Square(OriginalPosition.Z));
+                NewPosition = FVector(OriginalPosition.X, Radius * FMath::Cos(Angle), Radius * FMath::Sin(Angle));
+            }
+            else
+            {
+                float Angle = FMath::Atan2(OriginalPosition.Z, OriginalPosition.X) + OrbitSpeed * DeltaTime;
+                float Radius = FMath::Sqrt(FMath::Square(OriginalPosition.X) + FMath::Square(OriginalPosition.Z));
+                NewPosition = FVector(Radius * FMath::Cos(Angle), OriginalPosition.Y, Radius * FMath::Sin(Angle));
+            }
+            
+            QuditModules[i]->SetRelativeLocation(NewPosition);
+        }
+    }
+    
+    // Update dimensional effects
+    if (ComputerCoreMID)
+    {
+        // Pulse the emissive factor
+        float EmissivePulse = 5.0f * FMath::Sin(TimeElapsed * 0.5f) + 10.0f;
+        ComputerCoreMID->SetScalarParameterValue(TEXT("EmissiveIntensity"), EmissivePulse * DimensionalEffectIntensity);
+    }
+    
+    if (HolographicMID)
+    {
+        // Update holographic parameters
+        HolographicMID->SetScalarParameterValue(TEXT("TimeParameter"), TimeElapsed);
+        HolographicMID->SetScalarParameterValue(TEXT("IntensityParameter"), DimensionalEffectIntensity);
+    }
+    
+    // Animate the dragon breath occasionally
+    if (DragonBreathEffect)
+    {
+        if (FMath::Sin(TimeElapsed * 0.1f) > 0.9f)
+        {
+            DragonBreathEffect->Activate();
+        }
+        else if (FMath::Sin(TimeElapsed * 0.1f) < -0.9f)
+        {
+            DragonBreathEffect->Deactivate();
+        }
+    }
+}
+
+void AEnnerealExhibitionHall::ActivateComputer()
+{
+    // Enable all visual effects for the computer
+    DimensionalEffects->Activate();
+    
+    // Set the core material to active state
+    if (ComputerCoreMID)
+    {
+        ComputerCoreMID->SetScalarParameterValue(TEXT("IsActive"), 1.0f);
+    }
+    
+    // Activate all computer lights
+    for (USpotLightComponent* Light : ComputerLights)
+    {
+        Light->SetVisibility(true);
+    }
+    
+    // Start with full intensity
+    DimensionalEffectIntensity = 1.0f;
+}
+
+void AEnnerealExhibitionHall::DeactivateComputer()
+{
+    // Disable visual effects
+    DimensionalEffects->Deactivate();
+    
+    // Set the core material to inactive state
+    if (ComputerCoreMID)
+    {
+        ComputerCoreMID->SetScalarParameterValue(TEXT("IsActive"), 0.0f);
+    }
+    
+    // Deactivate all computer lights
+    for (USpotLightComponent* Light : ComputerLights)
+    {
+        Light->SetVisibility(false);
+    }
+    
+    // Turn down the intensity
+    DimensionalEffectIntensity = 0.0f;
+}
+
+void AEnnerealExhibitionHall::ToggleDimensionalVisuals(bool bEnable)
+{
+    // Set the intensity level based on enable/disable
+    DimensionalEffectIntensity = bEnable ? 1.0f : 0.0f;
+    
+    // Update particle effects
+    if (bEnable)
+    {
+        DimensionalEffects->Activate();
+    }
+    else
+    {
+        DimensionalEffects->Deactivate();
+    }
+    
+    // Update materials
+    if (ComputerCoreMID)
+    {
+        ComputerCoreMID->SetScalarParameterValue(TEXT("VisualIntensity"), DimensionalEffectIntensity);
+    }
+    
+    if (HolographicMID)
+    {
+        HolographicMID->SetScalarParameterValue(TEXT("IntensityParameter"), DimensionalEffectIntensity);
+    }
+}
+
+void AEnnerealExhibitionHall::ConnectToSpatialRoom(const FString& RoomID)
+{
+    SpatialRoomID = RoomID;
+    bEnableSpatialVisitors = true;
+    
+    // This function would integrate with Spatial.io API
+    // In an actual implementation, you would:
+    // 1. Use HTTP requests or a plugin to communicate with Spatial.io
+    // 2. Register this Unreal scene with the specified room
+    // 3. Setup networking for visitor representation
+    
+    UE_LOG(LogTemp, Display, TEXT("Connected to Spatial.io room: %s"), *RoomID);
+}
+
+void AEnnerealExhibitionHall::HostSpatialEvent(const FString& EventName, const FString& EventDescription)
+{
+    // This function would create an event in the connected Spatial.io room
+    // In an actual implementation, you would:
+    // 1. Use Spatial.io API to create an event
+    // 2. Set event parameters like name, description, start/end times
+    // 3. Configure event-specific settings
+    
+    UE_LOG(LogTemp, Display, TEXT("Hosting Spatial.io event: %s - %s"), *EventName, *EventDescription);
+}
+
+// Add the following to the end of the .h file
+/*
+Blueprint Function Library for the Ennereal Blueprint System
+
+This library provides utility functions for working with the Ennereal Computing system
+and its Spatial.io integration.
+*/
+UCLASS()
+class ENNEREALEXPERIENCE_API UEnnerealBlueprintLibrary : public UBlueprintFunctionLibrary
+{
+    GENERATED_BODY()
+    
+public:
+    /**
+     * Exports the current Ennereal scene configuration for use in Spatial.io
+     * @param ExhibitionHall - Reference to the exhibition hall to export
+     * @param OutputPath - File path where the configuration will be saved
+     * @return Whether the export was successful
+     */
+    UFUNCTION(BlueprintCallable, Category = "Ennereal|Spatial Integration")
+    static bool ExportToSpatialFormat(AEnnerealExhibitionHall* ExhibitionHall, const FString& OutputPath);
+    
+    /**
+     * Creates a visualization of the qudit Hilbert space
+     * @param Location - World location to spawn the visualization
+     * @param Scale - Scale of the visualization
+     * @return Reference to the spawned visualization actor
+     */
+    UFUNCTION(BlueprintCallable, Category = "Ennereal|Visualization")
+    static AActor* CreateHilbertSpaceVisualization(UObject* WorldContextObject, const FVector& Location, float Scale);
+    
+    /**
+     * Simulates a cross-dimensional calculation on the Ennereal computer
+     * @param ExhibitionHall - Reference to the exhibition hall containing the computer
+     * @param CalculationComplexity - How complex the visualization should be (0-1)
+     * @param Duration - How long the calculation visualization should last
+     */
+    UFUNCTION(BlueprintCallable, Category = "Ennereal|Simulation")
+    static void SimulateCrossDimensionalCalculation(AEnnerealExhibitionHall* ExhibitionHall, float CalculationComplexity, float Duration);
+};

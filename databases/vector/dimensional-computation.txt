@@ -1,0 +1,408 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+use ink_lang as ink;
+use ink_storage::{
+    traits::SpreadAllocate,
+    Mapping,
+};
+use pqc_kyber::*;
+use pqc_dilithium::*;
+use scale::{Decode, Encode};
+
+#[ink::contract]
+mod dimensional_computation {
+    #[ink(storage)]
+    #[derive(SpreadAllocate)]
+    pub struct DimensionalComputation {
+        // Computational resources
+        compute_nodes: Mapping<NodeId, ComputeNode>,
+        active_computations: Mapping<ComputationId, Computation>,
+        computation_results: Mapping<ComputationId, ComputationResult>,
+        
+        // Dimension management
+        dimension_resources: Mapping<DimensionId, ResourceAllocation>,
+        resource_usage: Mapping<DimensionId, UsageMetrics>,
+        
+        // Royalty distribution
+        matrix_royalties: Mapping<DimensionId, RoyaltyConfig>,
+        accrued_fees: Mapping<AccountId, Balance>,
+        
+        // Security and persistence
+        computation_proofs: Mapping<ComputationId, ComputationProof>,
+        state_persistence: Mapping<DimensionId, PersistenceConfig>,
+    }
+
+    #[derive(Encode, Decode, Debug)]
+    pub struct ComputeNode {
+        capabilities: ComputeCapabilities,
+        availability: ResourceAvailability,
+        performance_metrics: PerformanceMetrics,
+        status: NodeStatus,
+    }
+
+    #[derive(Encode, Decode, Debug)]
+    pub struct Computation {
+        dimension_id: DimensionId,
+        requirements: ComputeRequirements,
+        input_data: Vec<DataRef>,
+        status: ComputationStatus,
+        started_at: Timestamp,
+        timeout: BlockNumber,
+    }
+
+    #[derive(Encode, Decode, Debug)]
+    pub struct ComputationResult {
+        output_data: Vec<u8>,
+        execution_metrics: ExecutionMetrics,
+        verification_proofs: Vec<VerificationProof>,
+        quantum_signature: DilithiumSignature,
+    }
+
+    #[derive(Encode, Decode, Debug)]
+    pub struct ResourceAllocation {
+        compute_power: u32,
+        memory: u32,
+        storage: u32,
+        bandwidth: u32,
+        allocated_nodes: Vec<NodeId>,
+    }
+
+    #[derive(Encode, Decode, Debug)]
+    pub struct ComputationProof {
+        execution_trace: Vec<u8>,
+        validator_signatures: Vec<DilithiumSignature>,
+        persistence_proof: Vec<u8>,
+        timestamp: Timestamp,
+    }
+
+    impl DimensionalComputation {
+        #[ink(constructor)]
+        pub fn new() -> Self {
+            ink_lang::utils::initialize_contract(|contract: &mut Self| {
+                // Constructor implementation
+            })
+        }
+
+        #[ink(message)]
+        pub fn request_computation(
+            &mut self,
+            dimension_id: DimensionId,
+            requirements: ComputeRequirements,
+            input_data: Vec<DataRef>,
+        ) -> Result<ComputationId, Error> {
+            // Verify dimension exists and has resources
+            let resources = self.dimension_resources.get(dimension_id)
+                .ok_or(Error::DimensionNotFound)?;
+            
+            // Validate requirements against available resources
+            self.validate_requirements(&requirements, &resources)?;
+            
+            // Generate computation ID
+            let computation_id = self.generate_computation_id();
+            
+            // Create computation
+            let computation = Computation {
+                dimension_id,
+                requirements,
+                input_data,
+                status: ComputationStatus::Pending,
+                started_at: self.env().block_timestamp(),
+                timeout: self.env().block_number() + 1000, // Example timeout
+            };
+            
+            // Allocate resources
+            self.allocate_resources(
+                dimension_id,
+                computation_id,
+                &requirements
+            )?;
+            
+            self.active_computations.insert(computation_id, &computation);
+
+            self.env().emit_event(ComputationRequested {
+                computation_id,
+                dimension_id,
+                requirements: requirements.clone(),
+            });
+
+            Ok(computation_id)
+        }
+
+        #[ink(message)]
+        pub fn submit_result(
+            &mut self,
+            computation_id: ComputationId,
+            result: ComputationResult,
+        ) -> Result<(), Error> {
+            let mut computation = self.active_computations.get(computation_id)
+                .ok_or(Error::ComputationNotFound)?;
+            
+            // Verify node authorization
+            self.verify_compute_node(self.env().caller())?;
+            
+            // Verify result validity
+            self.verify_computation_result(
+                &computation,
+                &result
+            )?;
+            
+            // Update computation status
+            computation.status = ComputationStatus::Completed;
+            self.active_computations.insert(computation_id, &computation);
+            
+            // Store result
+            self.computation_results.insert(computation_id, &result);
+            
+            // Generate and store computation proof
+            let proof = self.generate_computation_proof(
+                &computation,
+                &result
+            )?;
+            self.computation_proofs.insert(computation_id, &proof);
+            
+            // Process fees and royalties
+            self.process_computation_fees(
+                computation_id,
+                &computation,
+                &result
+            )?;
+
+            self.env().emit_event(ComputationCompleted {
+                computation_id,
+                success: true,
+                execution_time: result.execution_metrics.execution_time,
+            });
+
+            Ok(())
+        }
+
+        #[ink(message)]
+        pub fn allocate_dimension_resources(
+            &mut self,
+            dimension_id: DimensionId,
+            allocation: ResourceAllocation,
+        ) -> Result<(), Error> {
+            // Verify caller authorization
+            self.verify_dimension_authority(self.env().caller())?;
+            
+            // Validate allocation
+            self.validate_resource_allocation(&allocation)?;
+            
+            // Store allocation
+            self.dimension_resources.insert(dimension_id, &allocation);
+            
+            // Initialize usage metrics
+            let metrics = UsageMetrics {
+                compute_used: 0,
+                memory_used: 0,
+                storage_used: 0,
+                bandwidth_used: 0,
+                last_updated: self.env().block_timestamp(),
+            };
+            self.resource_usage.insert(dimension_id, &metrics);
+            
+            // Configure persistence
+            let persistence_config = PersistenceConfig {
+                redundancy_factor: 3,
+                persistence_period: 10000, // Example blocks
+                verification_frequency: 100, // Example blocks
+            };
+            self.state_persistence.insert(dimension_id, &persistence_config);
+
+            self.env().emit_event(ResourcesAllocated {
+                dimension_id,
+                compute_power: allocation.compute_power,
+                memory: allocation.memory,
+                nodes: allocation.allocated_nodes.len() as u32,
+            });
+
+            Ok(())
+        }
+
+        #[ink(message)]
+        pub fn register_compute_node(
+            &mut self,
+            capabilities: ComputeCapabilities,
+        ) -> Result<NodeId, Error> {
+            let caller = self.env().caller();
+            
+            // Generate node ID
+            let node_id = self.generate_node_id();
+            
+            // Create compute node
+            let node = ComputeNode {
+                capabilities,
+                availability: ResourceAvailability {
+                    compute_available: capabilities.max_compute,
+                    memory_available: capabilities.max_memory,
+                    storage_available: capabilities.max_storage,
+                    bandwidth_available: capabilities.max_bandwidth,
+                },
+                performance_metrics: PerformanceMetrics::default(),
+                status: NodeStatus::Active,
+            };
+            
+            self.compute_nodes.insert(node_id, &node);
+
+            self.env().emit_event(NodeRegistered {
+                node_id,
+                account: caller,
+                compute_power: capabilities.max_compute,
+            });
+
+            Ok(node_id)
+        }
+
+        // Helper functions
+        fn validate_requirements(
+            &self,
+            requirements: &ComputeRequirements,
+            resources: &ResourceAllocation,
+        ) -> Result<(), Error> {
+            if requirements.compute_power > resources.compute_power ||
+               requirements.memory > resources.memory ||
+               requirements.storage > resources.storage ||
+               requirements.bandwidth > resources.bandwidth {
+                return Err(Error::InsufficientResources);
+            }
+            Ok(())
+        }
+
+        fn allocate_resources(
+            &mut self,
+            dimension_id: DimensionId,
+            computation_id: ComputationId,
+            requirements: &ComputeRequirements,
+        ) -> Result<(), Error> {
+            // Implementation for resource allocation
+            Ok(()) // Placeholder
+        }
+
+        fn verify_compute_node(
+            &self,
+            account: AccountId,
+        ) -> Result<(), Error> {
+            // Implementation for node verification
+            Ok(()) // Placeholder
+        }
+
+        fn verify_computation_result(
+            &self,
+            computation: &Computation,
+            result: &ComputationResult,
+        ) -> Result<(), Error> {
+            // Implementation for result verification
+            Ok(()) // Placeholder
+        }
+
+        fn generate_computation_proof(
+            &self,
+            computation: &Computation,
+            result: &ComputationResult,
+        ) -> Result<ComputationProof, Error> {
+            // Implementation for proof generation
+            Ok(ComputationProof::default()) // Placeholder
+        }
+
+        fn process_computation_fees(
+            &mut self,
+            computation_id: ComputationId,
+            computation: &Computation,
+            result: &ComputationResult,
+        ) -> Result<(), Error> {
+            // Implementation for fee processing
+            Ok(()) // Placeholder
+        }
+
+        fn verify_dimension_authority(
+            &self,
+            account: AccountId,
+        ) -> Result<(), Error> {
+            // Implementation for authority verification
+            Ok(()) // Placeholder
+        }
+
+        fn validate_resource_allocation(
+            &self,
+            allocation: &ResourceAllocation,
+        ) -> Result<(), Error> {
+            // Implementation for allocation validation
+            Ok(()) // Placeholder
+        }
+
+        fn generate_computation_id(&self) -> ComputationId {
+            // Implementation using quantum-resistant hash
+            ComputationId::default() // Placeholder
+        }
+
+        fn generate_node_id(&self) -> NodeId {
+            // Implementation using quantum-resistant hash
+            NodeId::default() // Placeholder
+        }
+    }
+
+    // Events
+    #[ink(event)]
+    pub struct ComputationRequested {
+        #[ink(topic)]
+        computation_id: ComputationId,
+        dimension_id: DimensionId,
+        requirements: ComputeRequirements,
+    }
+
+    #[ink(event)]
+    pub struct ComputationCompleted {
+        #[ink(topic)]
+        computation_id: ComputationId,
+        success: bool,
+        execution_time: u32,
+    }
+
+    #[ink(event)]
+    pub struct ResourcesAllocated {
+        #[ink(topic)]
+        dimension_id: DimensionId,
+        compute_power: u32,
+        memory: u32,
+        nodes: u32,
+    }
+
+    #[ink(event)]
+    pub struct NodeRegistered {
+        #[ink(topic)]
+        node_id: NodeId,
+        account: AccountId,
+        compute_power: u32,
+    }
+
+    // Types
+    #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    pub enum ComputationStatus {
+        Pending,
+        Running,
+        Completed,
+        Failed,
+    }
+
+    #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    pub enum NodeStatus {
+        Active,
+        Busy,
+        Offline,
+        Maintenance,
+    }
+
+    // Error types
+    #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    pub enum Error {
+        DimensionNotFound,
+        ComputationNotFound,
+        InsufficientResources,
+        UnauthorizedAccess,
+        ComputationFailed,
+        InvalidResult,
+        ResourceValidationFailed,
+    }
+}
