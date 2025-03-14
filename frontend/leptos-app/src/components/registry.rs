@@ -1,4 +1,16 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+use leptos::*;
+use permaweb_lib::profile::{Profile, Zone, Wallet};
+
+// Registry Component for Spirulina Tracking
+#[component]
+pub fn SpirulinaRegistry() -> impl IntoView {
+    // ActorX implementation with Permaweb Profile
+    let profile = Profile::new("NRSH-Registry");
+    let zone = Zone::new(&profile);
+    let wallet = Wallet::new(&profile);
+    
+    // Implementation based on spirulina-registry.rs logic
+    #![cfg_attr(not(feature = "std"), no_std)]
 
 use ink_lang as ink;
 
@@ -736,5 +748,16 @@ mod spirulina_registry {
             // Facility count should be 1
             assert_eq!(registry.get_facilities_count(), 1);
         }
+    }
+}
+
+    
+    view! {
+        <div class="spirulina-registry">
+            <h2>"Spirulina Registry"</h2>
+            <div class="registry-interface">
+                // Registry interface components
+            </div>
+        </div>
     }
 }
